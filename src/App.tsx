@@ -1,44 +1,46 @@
-import React, { useState } from 'react';
-import { Header } from './components/Header';
-import { InstagramForm } from './components/InstagramForm';
-import { ResultsDisplay } from './components/ResultsDisplay';
-import { Instructions } from './components/Instructions';
-import { Footer } from './components/Footer';
-import { ThemeProvider } from './contexts/ThemeContext';
+import React, { useState } from "react";
+import { Header } from "./components/Header";
+import { InstagramForm } from "./components/InstagramForm";
+import { ResultsDisplay } from "./components/ResultsDisplay";
+import { Instructions } from "./components/Instructions";
+import { Footer } from "./components/Footer";
+import { ThemeProvider } from "./contexts/ThemeContext";
 export function App() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-  const handleSubmit = link => {
+  const [result, setResult] = useState<{
+    caption: string;
+    videoUrl: string;
+    username?: string;
+  } | null>(null);
+  const [error, setError] = useState("");
+  const handleSubmit = async (url: string) => {
     setLoading(true);
-    setError('');
-    // In a real application, this would call a backend API
-    // For demo purposes, we'll simulate a response after a delay
-    setTimeout(() => {
-      if (!link.includes('instagram.com')) {
-        setError('Please enter a valid Instagram reel link');
-        setResult(null);
-      } else {
-        setResult({
-          videoUrl: 'https://images.pexels.com/videos/3045163/free-video-3045163.mp4',
-          caption: 'This is an example caption for the Instagram reel! #trending #viral #instagram',
-          likes: '245K',
-          username: 'instagram_user',
-          date: '2023-05-15',
-          // Additional video information
-          duration: '00:42',
-          resolution: '1080x1920',
-          size: '8.4 MB',
-          format: 'MP4',
-          frameRate: '30 fps',
-          audioCodec: 'AAC',
-          videoCodec: 'H.264'
-        });
+    setError("");
+    setResult(null);
+
+    try {
+      const res = await fetch("/api/scrape-reel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong.");
       }
+
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
-  return <ThemeProvider>
+
+  return (
+    <ThemeProvider>
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <Header />
         <main className="flex-grow w-full">
@@ -52,7 +54,11 @@ export function App() {
                   Download Instagram reels and view captions with just a link
                 </p>
               </div>
-              <InstagramForm onSubmit={handleSubmit} loading={loading} error={error} />
+              <InstagramForm
+                onSubmit={handleSubmit}
+                loading={loading}
+                error={error}
+              />
             </section>
             {result && <ResultsDisplay result={result} />}
             <Instructions />
@@ -60,5 +66,6 @@ export function App() {
         </main>
         <Footer />
       </div>
-    </ThemeProvider>;
+    </ThemeProvider>
+  );
 }
