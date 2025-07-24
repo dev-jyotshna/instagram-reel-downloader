@@ -1,11 +1,7 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import chromium from "chrome-aws-lambda";
-import puppeteer, { Browser } from "puppeteer-core";
+import puppeteer from "puppeteer-core";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -15,7 +11,8 @@ export default async function handler(
     return res.status(400).json({ error: "Invalid Instagram reel URL" });
   }
 
-  let browser: Browser | null = null;
+  let browser: puppeteer.Browser | null = null;
+
   try {
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -31,16 +28,17 @@ export default async function handler(
     const videoUrl = await page.$eval('meta[property="og:video"]', (el) =>
       el.getAttribute("content")
     );
+
     const caption = await page.$eval('meta[property="og:description"]', (el) =>
       el.getAttribute("content")
     );
 
     return res.status(200).json({ videoUrl, caption });
   } catch (error) {
-    console.error("Error scraping:", error);
+    console.error("Scraping error:", error);
     return res.status(500).json({ error: "Failed to scrape Instagram reel" });
   } finally {
-    if (browser !== null) {
+    if (browser) {
       await browser.close();
     }
   }

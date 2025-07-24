@@ -25,15 +25,17 @@ export function App() {
         body: JSON.stringify({ url }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.error || "Something went wrong.");
+        const errText = await res.text(); // capture raw error response
+        throw new Error(`Error ${res.status}: ${errText}`);
       }
+
+      const data = await res.json();
 
       setResult(data);
     } catch (err: any) {
-      setError(err.message);
+      console.error(err);
+      setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
