@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/scrape-reel.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
